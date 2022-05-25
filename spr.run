@@ -1,0 +1,54 @@
+macro=;
+silent- all;
+/* We developed a routine for the automatic calculation of the SPR distances among all trees produced by an interval of K-values defined by the method of Mirande (2009) in TNT: the calculation of the SPR distance for each of the trees produced is usually laborious and is assumed to produce typing errors because the outcome of the routine usually is converted into triangular matrices! */
+
+keep 0; 
+macro * 15 1000;
+
+quote
+===========================================================================================
+Please before run open the routine and specify the directory of your trees in .ctf format!
+===========================================================================================
+===========================================================================================
+[1] Number of k values - remember that we start counting from 0 in TNT!: so, n-1!
+===========================================================================================
+;
+
+/* loading the trees in .ctf format */
+loop 0 %1;
+	short /Users/jozecaricardo/Desktop/tnt-mac-no-tax-limit/ferrari/k#1..ctf; /* CHANGE THE ADDRESS HERE! */ 
+stop;
+var: difspr valor ktotal[(%1+1)] difspr2 difspr3 tota;
+set valor 0;
+report=;
+set difspr 0;
+set tota 0; 
+set difspr2 0;
+set difspr3 0;
+loop 0 %1;
+	set difspr3 0;
+	loop 0 %1;
+		set difspr2 0;
+		loop 1 200;
+			set difspr sprdiff ['valor' #2 100x#3];
+			set tota += 'difspr';
+		stop;
+	set difspr2 ('tota'/200);
+	set difspr3 += 'difspr2';
+	set tota 0;
+	stop;
+	set ktotal[#1] 'difspr3';
+	set valor ++;
+	set difspr 0;
+	set tota 0;
+stop;
+
+log /Users/jozecaricardo/Desktop/tnt-mac-no-tax-limit/ferrari/sprresults.out1; /* CHANGE THE ADDRESS HERE! */
+quote kval, difspr_total;
+loop 0 %1;
+	quote k#1, 'ktotal[#1]';
+stop;
+log/;
+keep 0;
+quote Macro designed by J. R. I. Ribeiro (v. 1.2);
+proc/;
