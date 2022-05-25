@@ -1,0 +1,138 @@
+macfloat-;
+macro=;
+/* We developed a routine for the evaluation of the congruence between characters based on measures, metric relations, and discrete characters, by establishing a procedure that progressively compares the effect of adding measures and their impact on topologies resulting from different resulting matrices. */
+/* We used the SPR distance to account for differences and similarities among those topologies found in each iteration and the topology (or consensus topology) recovered by the character matrix considering only the discrete characters submitted to an IW scheme with a constant K estimated after exploring different concavities based on the method developed by Mirande (2009) */
+clb;
+hold 99999;
+macro * 15 1000;
+
+quote
+===================================
+[1] Number of continuous characters used:
+[2] Constant K estimated after exploring different concavities:
+[3] Number of combinations:
+[4] Do you want to save the trees? yes or no.
+;
+
+var: com sem valor difespr tota mdif valui;
+/* This procedure added gradually all possible combinations of characters based on measures and relations to the matrix of discrete characters  */
+set valor 1;
+piwe-;
+var: kref;
+set kref %2;
+coll 3;
+log+ resul.out;
+quote comb_car, difSPR;
+log/; 
+
+silent= console;
+var: voltas;
+set voltas 1;
+var= + done;
+var= +replicas;
+var= + conta;
+var: saveTrees;
+set done 1;
+set conta 1; 
+report-;
+set replicas %3;
+set saveTrees %4;
+
+loop 1 %1;
+	ccode!;
+	var: medidas[#1];
+	combine %1 'valor' medidas;
+		progress 'done' 'replicas' Estimating SPR distance of the combination 'conta' ...;
+		set done ++;
+		xgroup =0 (conti) type=cont;
+		;
+		ccode] {conti}; /* inactivating the measures */
+		xgroup =1 (contimo) 'medidas[0-('valor'-1)]';
+		;
+		ccode[ {contimo}; /* activating the measures */
+
+		/* Performing heuristic tree searches with the combination */	
+		piwe= 'kref';
+		xmu= hits 100 level 7 drift10;
+		if ((ntrees+1) > 1)
+   			nelsen*;
+			tsave com.tmp;
+			save {strict};
+			tsave/;
+		else
+			tsave com.tmp;
+			save 0;
+			tsave/;
+		end;
+		keep 0;
+		/* Performing heuristic tree searches without the combination */
+		ccode] {contimo}; /* inactivating the measures */
+		piwe= 'kref';
+		xmu= hits 100 level 7 drift10;
+		if ((ntrees+1) > 1)
+   			nelsen*;
+			tsave sem.tmp;
+			save {strict};
+			tsave/;
+		else
+			tsave sem.tmp;
+			save 0;
+			tsave/;
+		end;
+		keep 0;
+		short sem.tmp;
+		short com.tmp;
+		set valui 1;
+		loop 1 200;
+			set difespr sprdiff [1 0 100x'valui'];
+			set tota += 'difespr';
+			set valui ++;
+		stop;
+		set difespr 0;
+		set mdif ('tota'/200);
+		set tota 0;
+		
+		keep 0;
+
+		if ('saveTrees' == yes)
+
+			short com.tmp;
+
+			/* saving trees */
+			if ('mdif' == 0)
+				tsave /SPRdiffs/spr0.tmp +;
+				save 0;
+				tsave/;
+			end;
+			if ('mdif' == 2)
+				tsave /SPRdiffs/spr2.tmp +;
+				save 0;
+				tsave/;
+			end;
+			if ('mdif' == 6)
+				tsave /SPRdiffs/spr6.tmp +;
+				save 0;
+				tsave/;
+			end;
+		end;		
+			
+				
+		/* output */
+		macfloat 0;
+		silent= console;
+		log+ resul.out;
+		quote 'medidas[0-('valor'-1) &45]', 'mdif';
+		log/;
+		silent= all;
+		piwe-;
+		set mdif 0;
+		keep 0;
+	endcomb;
+	
+	set valor ++;
+	set conta ++;
+stop;
+progress/;
+silent- all;
+quote Macro designed by J. R. I. Ribeiro (v. 1.0);
+proc/;
